@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.7.0</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.zahariaca</groupId>
+	<artifactId>nflow-test</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>nflow-test</name>
+	<description>Demo project for Nflow and Spring Boot</description>
+	<properties>
+		<java.version>17</java.version>
+
+		<lib.nflow-engine.version>8.0.0</lib.nflow-engine.version>
+		<lib.springdoc-openapi.version>1.6.6</lib.springdoc-openapi.version>
+
+		<plugin.docker.version>0.39.0</plugin.docker.version>
+		<plugin.resources.version>3.2.0</plugin.resources.version>
+
+		<skipCS>false</skipCS>
+		<skipIT>false</skipIT>
+		<skipPMD>false</skipPMD>
+		<skipUT>false</skipUT>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-rest</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>io.nflow</groupId>
+			<artifactId>nflow-engine</artifactId>
+			<version>${lib.nflow-engine.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.nflow</groupId>
+			<artifactId>nflow-rest-api-spring-web</artifactId>
+			<version>${lib.nflow-engine.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-webflux-core</artifactId>
+			<version>${lib.springdoc-openapi.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-webflux-ui</artifactId>
+			<version>${lib.springdoc-openapi.version}</version>
+		</dependency>
+<!--		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+			<version>2.0.2</version>
+		</dependency>-->
+
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>${project.artifactId}</finalName>
+
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+
+			<!-- ********************************* APACHE MAVEN RESOURCES ************************************** -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>${plugin.resources.version}</version>
+			</plugin>
+
+			<!-- *********************************** APACHE MAVEN JAVADOC ************************************** -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack</id>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>io.nflow</groupId>
+									<artifactId>nflow-explorer-ng</artifactId>
+									<version>${lib.nflow-engine.version}</version>
+									<type>tar.gz</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.outputDirectory}/static/explorer</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>${plugin.docker.version}</version>
+
+				<configuration>
+					<skip>${skipIT}</skip>
+					<autoCreateCustomNetworks>true</autoCreateCustomNetworks>
+					<removeVolumes>true</removeVolumes>
+					<useColor>true</useColor>
+					<verbose>true</verbose>
+
+					<!-- ************************************* IMAGES DEFINITION *********************************** -->
+					<images>
+						<!-- Postgres -->
+						<image>
+							<alias>nflow-test.postgres</alias>
+							<name>postgres:15.1</name>
+							<run>
+								<namingStrategy>alias</namingStrategy>
+								<network>
+									<mode>custom</mode>
+									<name>nflow-test</name>
+									<alias>nflow-test.postgres</alias>
+								</network>
+								<ports>
+									<port>5432:5432</port>
+								</ports>
+								<env>
+									<POSTGRES_USER>postgres</POSTGRES_USER>
+									<POSTGRES_PASSWORD>admin</POSTGRES_PASSWORD>
+								</env>
+							</run>
+						</image>
+
+
+						<!-- Server -->
+						<image>
+							<alias>nflow.server</alias>
+							<name>${project.groupId}/${project.artifactId}:${project.version}</name>
+							<build>
+								<skip>${docker.server.skip}</skip>
+								<from>amazoncorretto:17.0.2</from>
+								<cleanup>remove</cleanup>
+								<maintainer>zaharia.c.alexandru@gmail.com</maintainer>
+								<assembly>
+									<mode>dir</mode>
+									<basedir>${basedir}</basedir>
+									<targetDir>/servers/nflow-test</targetDir>
+									<descriptor>docker-assembly.xml</descriptor>
+								</assembly>
+								<workdir>/servers/nflow-test</workdir>
+								<ports>
+									<port>8080</port>
+									<port>8081</port>
+									<port>8082</port>
+								</ports>
+								<volumes>
+									<volume>/servers/nflow-test/config</volume>
+									<volume>/servers/nflow-test/jacoco-report</volume>
+								</volumes>
+								<entryPoint>
+									<exec>
+										<arg>java</arg>
+										<arg>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8082</arg>
+										<arg>-Dreactor.netty.http.server.accessLogEnabled=true</arg>
+										<arg>-jar</arg>
+										<arg>/servers/nflow-test/nflow-test.jar</arg>
+									</exec>
+								</entryPoint>
+							</build>
+							<run>
+								<skip>${docker.server.skip}</skip>
+								<namingStrategy>alias</namingStrategy>
+								<network>
+									<mode>custom</mode>
+									<name>nflow-test</name>
+									<alias>nflow-test.server</alias>
+								</network>
+								<ports>
+									<port>8080:8080</port>
+									<port>8081:8081</port>
+									<port>8082:8082</port>
+								</ports>
+								<volumes>
+									<bind>
+										<volume>${basedir}/src/main/docker/config:/servers/nflow-test/config</volume>
+										<volume>${project.build.directory}/jacoco-report:/servers/nflow-test/jacoco-report</volume>
+									</bind>
+								</volumes>
+								<dependsOn>
+									<container>nflow-test.postgres</container>
+								</dependsOn>
+								<env>
+									<SPRING_PROFILES_ACTIVE>nflow.db.postgresql</SPRING_PROFILES_ACTIVE>
+									<SPRING_DATASOURCE_URL>jdbc:postgresql://nflow-test.postgres:5432/postgres?createDatabaseIfNotExist=true&amp;autoReconnect=true&amp;useSSL=false</SPRING_DATASOURCE_URL>
+									<SPRING_DATASOURCE_USERNAME>postgres</SPRING_DATASOURCE_USERNAME>
+									<SPRING_DATASOURCE_PASSWORD>admin</SPRING_DATASOURCE_PASSWORD>
+								</env>
+								<wait>
+									<log>Started Application</log>
+									<time>120000</time>
+								</wait>
+								<log>
+									<color>green</color>
+								</log>
+							</run>
+						</image>
+
+					</images>
+				</configuration>
+				<executions>
+					<execution>
+						<id>start</id>
+						<goals>
+							<goal>build</goal>
+							<goal>start</goal>
+						</goals>
+						<phase>pre-integration-test</phase>
+					</execution>
+					<execution>
+						<id>stop</id>
+						<goals>
+							<goal>stop</goal>
+						</goals>
+						<phase>post-integration-test</phase>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

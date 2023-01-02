@@ -1,0 +1,120 @@
+spring:
+  profiles:
+    active: nflow.db.postgresql
+#  jpa.properties.hibernate.dialect = org.hibernate.dialect.PostgreSQLDialect
+#  spring.jpa.hibernate.ddl-auto=none
+#  spring.jpa.hibernate.show-sql=true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: admin
+  webflux:
+    static-path-pattern: /ui/**
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: openapi, swagger-ui
+springdoc:
+  show-actuator: true
+  api-docs:
+    path: /api-docs
+  api-nodes:
+    path: /api-nodes
+  swagger-ui:
+    path: /swagger-ui/index.html
+    show-common-extensions: true
+    show-extensions: true
+  use-fqn: true
+  model-converters:
+    polymorphic-converter:
+      enabled: true
+  remove-broken-reference-definitions: false
+logging:
+  level:
+    web: TRACE
+    org:
+      springframework:
+        web: TRACE
+nflow:
+  autoinit: true
+  autostart: true
+  db:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres?createDatabaseIfNotExist=true&autoReconnect=true}
+    user: postgres
+    password: admin
+    create_on_startup: true
+    disable_batch_updates: false
+    driver: org.postgresql.Driver
+    idle_timeout_seconds: 600
+    max_pool_size: 4
+    workflowInstanceType:
+      cacheSize: 10000
+  definition:
+    persist: true
+  dispatcher:
+    await:
+      termination:
+        seconds: 60
+    executor:
+      thread:
+        keepalive:
+          seconds: 0
+    sleep:
+      ms: 1000
+  executor:
+    group: nflow
+    keepalive:
+      seconds: 60
+    stateProcessingRetryDelay:
+      seconds: 60
+    stateSaveRetryDelay:
+      seconds: 60
+    stateVariableValueTooLongRetryDelay:
+      minutes: 60
+    stuckThreadThreshold:
+      seconds: 60
+    timeout:
+      seconds: 900
+  illegal:
+    state:
+      change:
+        action: log
+  maintenance:
+    initial:
+      archive:
+        olderThan: P120D
+      cron: 4 4 4 * * *
+      delete:
+        olderThan: ''
+      deleteArchived:
+        olderThan: P1Y
+    insertWorkflowIfMissing: false
+  unknown:
+    workflow:
+      state:
+        retry:
+          delay:
+            minutes: 40
+      type:
+        retry:
+          delay:
+            minutes: 40
+  workflow:
+    instance:
+      query:
+        max:
+          actions: 1000
+          actions.default: 100
+          results: 10000
+          results.default: 100
+  rest:
+    allow:
+      headers: X-Requested-With, Content-Type, Origin, Referer, User-Agent, Accept
+      origin: '*'
+    cors:
+      enabled: false
+    path:
+      prefix: api/nflow
