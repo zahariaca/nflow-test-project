@@ -48,6 +48,9 @@ public class ExampleWorkflow extends WorkflowDefinition {
     public NextAction repeat(StateExecution execution) {
         System.out.println("Counter: " + execution.getVariable(VAR_COUNTER));
         execution.setVariable(VAR_COUNTER, execution.getVariable(VAR_COUNTER, Integer.class) + 1);
+        if (Integer.valueOf(execution.getVariable(VAR_COUNTER)) == 100) {
+            return NextAction.moveToState(State.error, "counter over 100");
+        }
         return NextAction.moveToStateAfter(State.repeat, DateTime.now().plusSeconds(10), "Next iteration");
     }
 }
